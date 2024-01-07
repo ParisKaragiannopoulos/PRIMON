@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">PriceMonitoring</string>
+    <string name="login_background">login_background</string>
+</resources>
