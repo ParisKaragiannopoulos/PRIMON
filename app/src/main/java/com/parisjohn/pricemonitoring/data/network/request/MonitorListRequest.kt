@@ -7,5 +7,14 @@ data class MonitorListRequest(
     @SerializedName("name")
     val name: String,
     @SerializedName("rooms")
-    val rooms: List<Int>
+    val rooms: List<Int>,
+)
+
+data class MonitorListUpdateRequest(
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("rooms")
+    val rooms: List<Int>,
+    @SerializedName("id")
+    val id: Int = -1
 )

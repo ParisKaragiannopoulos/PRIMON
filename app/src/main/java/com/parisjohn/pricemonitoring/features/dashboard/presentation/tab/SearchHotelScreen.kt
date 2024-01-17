@@ -3,10 +3,10 @@ package com.parisjohn.pricemonitoring.features.dashboard.presentation.tab
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,35 +43,47 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextIndent
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.getString
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.parisjohn.pricemonitoring.R
 import com.parisjohn.pricemonitoring.base.ui.ContentWithProgress
+import com.parisjohn.pricemonitoring.base.ui.DialogSelection
+import com.parisjohn.pricemonitoring.base.ui.ExpandableText
 import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
 import com.parisjohn.pricemonitoring.features.dashboard.DashboardIntent
 import com.parisjohn.pricemonitoring.features.dashboard.viewmodel.DashboardEvents
 import com.parisjohn.pricemonitoring.features.dashboard.viewmodel.DashboardViewModel
+import com.parisjohn.pricemonitoring.features.details.BottomSheet
+import com.parisjohn.pricemonitoring.features.details.GraphPrice
 import com.parisjohn.pricemonitoring.ui.theme.PriceMonitoringTheme
 import com.parisjohn.pricemonitoring.ui.theme.Purple40
 import com.parisjohn.pricemonitoring.utils.showToast
 import kotlinx.coroutines.flow.collectLatest
 
+private val dialogState by lazy { mutableStateOf(false) }
+private val dialogRoom by lazy { mutableIntStateOf(-1) }
 
 @Composable
 fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
     var isLoading by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
+    var searchText by remember { mutableStateOf("https://www.booking.com/hotel/it/dea-vatican-domus.en-gb.html") }
     val response by viewModel.hotelDetails.collectAsState()
+    val monitorLists by viewModel.list.collectAsState()
+
     val context = LocalContext.current
+    var graphPrice by remember { mutableStateOf(GraphPrice(emptyList(), emptyList())) }
+    if (graphPrice.axis_x.isNotEmpty()) {
+        BottomSheet(graphPrice) {
+            graphPrice = graphPrice.copy(axis_x = emptyList())
+        }
+    }
+
 
     LaunchedEffect(key1 = true) {
         viewModel.dashboardEvent.collectLatest {
@@ -80,11 +93,15 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                     context.showToast(it.msg)
                     false
                 }
-
                 else -> {
                     false
                 }
             }
+        }
+    }
+    LaunchedEffect(key1 = true) {
+        viewModel.graph.collectLatest {
+            graphPrice = it
         }
     }
 
@@ -153,6 +170,13 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                     longitude = it.location.longitude.toString(),
                     label = it.location.address
                 )
+
+                Text(
+                    modifier = Modifier
+                        .padding(10.dp),
+                    text = "Rooms:",
+                    fontSize = 20.sp,
+                )
                 it.rooms.forEach { room ->
                     HotelDetailItem(room)
                 }
@@ -160,9 +184,18 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
         }
     }
 
-
     if (isLoading) {
         ContentWithProgress()
+    }
+
+    if (dialogState.value) {
+        DialogSelection(title = getString(context,R.string.title_select_monitorlist),
+            optionsList = monitorLists.map { it.monitorListName }.toList(),
+            onSubmitButtonClick = {
+                viewModel.addRoomInList(it,dialogRoom.intValue)
+            },
+            onDismissRequest = { dialogState.value = false
+                dialogRoom.value = -1})
     }
 }
 
@@ -193,53 +226,52 @@ fun ShareMap(latitude: String, longitude: String, label: String) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HotelDetailItem(item: HotelInfoResponse.Room) {
-    val bullet = "\u2022"
+fun HotelDetailItem(item: HotelInfoResponse.Room, viewModel: DashboardViewModel = hiltViewModel()) {
     androidx.compose.material3.Surface(
         modifier = Modifier
             .padding(5.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { viewModel.getGraph(item.roomID) },
+                onLongClick = {
+                    dialogRoom.value = item.roomID
+                    dialogState.value = true
+                },
+            ),
         shape = RoundedCornerShape(8),
         border = BorderStroke(0.1.dp, MaterialTheme.colorScheme.outline)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
-                .clickable { /* navigate to chat*/ }
-                .padding(start = 16.dp, end = 16.dp)
+                .padding(vertical = 8.dp, horizontal = 16.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp)
-                    .weight(1f)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
+                    modifier = Modifier.weight(1f),
                     text = item.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = item.description,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Light
-                )
-                val paragraphStyle = ParagraphStyle(textIndent = TextIndent(restLine = 12.sp))
-                Text(
-                    buildAnnotatedString {
-                        item.attributes.forEach { attribute ->
-                            withStyle(style = paragraphStyle) {
-                                append(bullet)
-                                append("\t\t")
-                                append(attribute)
-                            }
-                        }
-                    }
-                )
             }
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text = item.description,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Light
+            )
+            ExpandableText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 5.dp),
+                text = item.attributes.joinToString(", "),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Light
+            )
         }
     }
 }

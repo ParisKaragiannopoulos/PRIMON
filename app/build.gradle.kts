@@ -86,14 +86,12 @@ dependencies {
     implementation("com.airbnb.android:lottie-compose:6.0.1")
     implementation("me.saket.swipe:swipe:1.2.0")
 
-    // For Jetpack Compose.
-    implementation("com.patrykandpatrick.vico:compose:1.13.1")
-    // For `compose`. Creates a `ChartStyle` based on an M2 Material Theme.
-    implementation("com.patrykandpatrick.vico:compose-m2:1.13.1")
+
     // For `compose`. Creates a `ChartStyle` based on an M3 Material Theme.
     implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
-    // Houses the core logic for charts and other elements. Included in all other modules.
-    implementation("com.patrykandpatrick.vico:core:1.13.1")
-    // For the view system.
-    implementation("com.patrykandpatrick.vico:views:1.13.1")
+
+
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

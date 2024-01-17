@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.List
@@ -27,11 +28,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,10 +74,12 @@ object MyIcons {
     val Info = Icons.Rounded.Info
     val Email = Icons.Filled.Email
     val Share = Icons.Filled.Share
+    val Notification = Icons.Filled.Notifications
     val Logout = Icons.Default.Logout
     val KeyboardArrowRight = Icons.Default.KeyboardArrowRight
 }
 val moreOptionsList = listOf(
+    FeatureList("Notifications",DCodeIcon.ImageVectorIcon(MyIcons.Notification)),
     FeatureList("About", DCodeIcon.ImageVectorIcon(MyIcons.Info)),
     FeatureList("Share App", DCodeIcon.ImageVectorIcon(MyIcons.Share)),
     FeatureList("Logout",DCodeIcon.ImageVectorIcon(MyIcons.Logout)),
@@ -87,7 +92,6 @@ val moreOptionsList = listOf(
 @Composable
 fun ProfileTabScreen(viewModel: DashboardViewModel = hiltViewModel()) {
     var sizeOfMonitorList by remember { mutableIntStateOf(0) }
-
     LaunchedEffect(key1 = true) {
         viewModel.list.collectLatest {
             sizeOfMonitorList = it.size
@@ -231,11 +235,10 @@ fun MainProfileContent() {
             )
             SubscriptionView()
 
-            Divider(modifier = Modifier.padding(vertical = 15.dp))
+            Divider(modifier = Modifier.padding(vertical = 6.dp))
         }
     }
 }
-
 @Composable
 fun SubscriptionView() {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.pro))
@@ -305,7 +308,7 @@ fun FooterContent(onLogoutClick: ()-> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(8),
     ) {
         Column(modifier = Modifier.padding(5.dp)) {
@@ -316,7 +319,7 @@ fun FooterContent(onLogoutClick: ()-> Unit) {
                 style = MaterialTheme.typography.titleMedium,
             )
             moreOptionsList.forEach {
-                MoreOptionsComp(it) {
+                MoreOptionsComp(featureList = it) {
                     if (it.name == "Logout") {
                         onLogoutClick.invoke()
                     }
@@ -328,9 +331,16 @@ fun FooterContent(onLogoutClick: ()-> Unit) {
 
 @Composable
 fun MoreOptionsComp(
+    viewModel: DashboardViewModel = hiltViewModel(),
     featureList: FeatureList,
     onClick: () -> Unit,
 ) {
+    var checked by remember { mutableStateOf(true) }
+    LaunchedEffect(key1 = true) {
+        viewModel.notificationStatus.collectLatest {
+            checked = it
+        }
+    }
     Row(
         modifier = Modifier
             .padding(5.dp)
@@ -364,11 +374,20 @@ fun MoreOptionsComp(
                 style = MaterialTheme.typography.labelLarge
             )
         }
-        Icon(
-            imageVector = MyIcons.KeyboardArrowRight,
-            contentDescription = null,
-            modifier = Modifier.padding(4.dp)
-        )
+        if(featureList.name == "Notifications"){
+            Switch(
+                checked = checked,
+                onCheckedChange = {
+                    viewModel.setNotificationEnabled(it)
+                }
+            )
+        }else{
+            Icon(
+                imageVector = MyIcons.KeyboardArrowRight,
+                contentDescription = null,
+                modifier = Modifier.padding(4.dp)
+            )
+        }
     }
 }
 

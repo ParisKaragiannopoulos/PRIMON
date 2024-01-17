@@ -43,7 +43,7 @@ fun LoginField(
     }
 
     TextField(
-        value = value,
+        value = "tes",
         onValueChange = onChange,
         modifier = modifier.background(Color.Transparent).border( width = 2.dp,
             color = Color.White,
@@ -61,6 +61,7 @@ fun LoginField(
             backgroundColor = Color.Transparent,
             textColor = Color.White,
             placeholderColor = Color.White,
+            unfocusedLabelColor = Color.White,
             unfocusedBorderColor = Color.Transparent
         ),
     )

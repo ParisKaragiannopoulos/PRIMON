@@ -4,6 +4,12 @@ import android.content.Context
 import android.text.TextUtils
 import android.util.Patterns
 import android.widget.Toast
+import java.io.IOException
+
+import java.io.InputStream
+
+
+
 
 
 fun Context.showToast(

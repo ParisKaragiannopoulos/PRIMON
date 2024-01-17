@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">PriceMonitoring</string>
     <string name="login_background">login_background</string>
+    <string name="channel_name">price_channel</string>
+    <string name="channel_description">price_reminder</string>
+    <string name="title_select_monitorlist">Select Monitor List</string>
 </resources>

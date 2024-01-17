@@ -1,0 +1,34 @@
+{
+  "name": "TEST_NAME",
+  "description": "TEST_DESCRIPTION",
+  "location": {
+    "address": "TEST_ADDRESS",
+    "city": "TEST_CITY",
+    "longitude": 10.5,
+    "latitude": 10.5
+  },
+  "url": "http://test.com/",
+  "hotelType": "HOTEL",
+  "score": "5.60",
+  "hotelID": 229,
+  "rooms": [
+    {
+      "roomID": 455,
+      "description": "TEST_DESCRIPTION_1",
+      "name": "TEST_NAME_1",
+      "attributes": [
+        "TEST_ATTR_1",
+        "TEST_ATTR_2"
+      ]
+    },
+    {
+      "roomID": 456,
+      "description": "TEST_DESCRIPTION_2",
+      "name": "TEST_NAME_2",
+      "attributes": [
+        "TEST_ATTR_3",
+        "TEST_ATTR_1"
+      ]
+    }
+  ]
+}

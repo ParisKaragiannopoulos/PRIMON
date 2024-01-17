@@ -84,6 +84,7 @@ fun PasswordField(
             backgroundColor = Color.Transparent,
             textColor = Color.White,
             placeholderColor = Color.White,
+            unfocusedLabelColor = Color.White,
             unfocusedBorderColor = Color.Transparent
     )
     )

@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -72,7 +74,7 @@ fun SignupScreen(loginViewModel: LoginViewModel = hiltViewModel(),
         }
     }
     Image(
-        painter = painterResource(id = R.drawable.signup_bg),
+        painter = painterResource(id = R.drawable.login_bg),
         contentDescription = stringResource(id = R.string.login_background),
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Crop
@@ -93,7 +95,9 @@ fun SignupScreen(loginViewModel: LoginViewModel = hiltViewModel(),
                     .size(32.dp),
             )
         }
-        Column(verticalArrangement = Arrangement.Bottom, modifier = Modifier.fillMaxSize().padding(20.dp,10.dp)) {
+        Column(verticalArrangement = Arrangement.Bottom, modifier = Modifier.fillMaxSize().verticalScroll(
+            rememberScrollState()
+        ).padding(20.dp,10.dp)) {
             LoginField(
                 value = user.email,
                 label = "Email",

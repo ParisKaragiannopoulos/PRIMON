@@ -14,6 +14,7 @@ class SessionManager @Inject constructor(
     private val prefs: SharedPreferences = context.getSharedPreferences(context.packageName + "_preferences", Context.MODE_PRIVATE)
     companion object {
         const val USER_TOKEN = "user_token"
+        const val USER_NOTIFICATIONS = "notifications"
     }
 
     /**
@@ -39,5 +40,18 @@ class SessionManager @Inject constructor(
      */
     fun fetchAuthToken(): String? {
         return prefs.getString(USER_TOKEN, null)
+    }
+
+    fun getContext(): Context{
+        return context
+    }
+
+    fun getNotificationStatus(): Boolean{
+        return prefs.getBoolean(USER_NOTIFICATIONS,true)
+    }
+    fun saveNotificationAllow(enabled: Boolean) {
+        val editor = prefs.edit()
+        editor.putBoolean(USER_NOTIFICATIONS, enabled)
+        editor.apply()
     }
 }

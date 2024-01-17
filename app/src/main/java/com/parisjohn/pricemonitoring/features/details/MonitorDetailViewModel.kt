@@ -1,5 +1,6 @@
 package com.parisjohn.pricemonitoring.features.details
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.parisjohn.pricemonitoring.base.BaseViewModel
@@ -81,18 +82,17 @@ class MonitorDetailViewModel @Inject constructor(
     }
 }
 
-private fun PriceRoomResponse.toGraph(): GraphPrice {
-    this.embedded.priceInfoList = this.embedded.priceInfoList.map { it.copy(date = it.timestamp.split(".")[0].toDate().plusDays(it.distanceDays.toLong()).toStringPattern())}
+fun PriceRoomResponse.toGraph(): GraphPrice {
+    this.embedded.priceInfoList = this.embedded.priceInfoList.map { it.copy(date = it.timestamp.split(".")[0].toDateTime().plusDays(it.distanceDays.toLong()).toStringPattern())}
     val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     val result = this.embedded.priceInfoList.sortedBy {
         LocalDate.parse(it.date, dateTimeFormatter)
-    }.distinctBy { it.date }
-
-    return GraphPrice(axis_x = result.map { it.date },
-        axis_y = result.map { it.price })
+    }.distinctBy { it.date }.groupBy { it.date }.mapValues { it.value.map { pair -> pair.price }.average() }
+    return GraphPrice(axis_x = result.map { it.key },
+        axis_y = result.map { it.value })
 }
 
-fun String.toDate(pattern: String = "yyyy-MM-dd'T'HH:mm:ss"): LocalDateTime {
+fun String.toDateTime(pattern: String = "yyyy-MM-dd'T'HH:mm:ss"): LocalDateTime {
     val patternFormatter = DateTimeFormatter.ofPattern(pattern)
     return LocalDateTime.parse(this, patternFormatter)
 }

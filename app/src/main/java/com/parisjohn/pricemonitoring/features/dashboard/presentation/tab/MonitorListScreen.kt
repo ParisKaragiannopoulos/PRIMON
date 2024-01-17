@@ -5,13 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
@@ -37,7 +38,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.github.mikephil.charting.charts.BarChart
+import com.github.mikephil.charting.charts.PieChart
+import com.github.mikephil.charting.components.Legend
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
+import com.github.mikephil.charting.data.PieData
+import com.github.mikephil.charting.data.PieDataSet
+import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.utils.ColorTemplate
+import com.parisjohn.pricemonitoring.base.ui.ContentWithProgress
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListsResponse
 import com.parisjohn.pricemonitoring.features.dashboard.DashboardIntent
 import com.parisjohn.pricemonitoring.features.dashboard.viewmodel.DashboardEvents
@@ -46,15 +61,21 @@ import com.parisjohn.pricemonitoring.ui.theme.PriceMonitoringTheme
 import kotlinx.coroutines.flow.collectLatest
 import me.saket.swipe.SwipeAction
 import me.saket.swipe.SwipeableActionsBox
+import kotlin.random.Random
+import kotlin.random.nextInt
+
 
 @OptIn(
     ExperimentalMaterialApi::class
 )
 @Composable
-fun MonitorListScreen(onMonitorClick: (MonitorListsResponse.MonitorListsResponseItem) -> Unit = {}, viewModel: DashboardViewModel = hiltViewModel()) {
+fun MonitorListScreen(
+    onMonitorClick: (MonitorListsResponse.MonitorListsResponseItem) -> Unit = {},
+    viewModel: DashboardViewModel = hiltViewModel()
+) {
     var isLoading by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
-    var list by remember {mutableStateOf(emptyList<MonitorListsResponse.MonitorListsResponseItem>()) }
+    var list by remember { mutableStateOf(emptyList<MonitorListsResponse.MonitorListsResponseItem>()) }
     val pullToRefreshState = rememberPullRefreshState(
         refreshing = isRefreshing,
         refreshThreshold = 140.dp,
@@ -67,10 +88,12 @@ fun MonitorListScreen(onMonitorClick: (MonitorListsResponse.MonitorListsResponse
                 is DashboardEvents.ShowMonitorLists -> {
                     false
                 }
+
                 is DashboardEvents.DeleteList -> {
-                    viewModel.processIntent(DashboardIntent.refreshList)
+                    //viewModel.processIntent(DashboardIntent.refreshList)
                     false
                 }
+
                 DashboardEvents.Loading -> true
                 else -> {
                     false
@@ -78,7 +101,7 @@ fun MonitorListScreen(onMonitorClick: (MonitorListsResponse.MonitorListsResponse
             }
         }
     }
-    LaunchedEffect(key1 = true){
+    LaunchedEffect(key1 = true) {
         viewModel.list.collectLatest {
             list = it
         }
@@ -88,20 +111,27 @@ fun MonitorListScreen(onMonitorClick: (MonitorListsResponse.MonitorListsResponse
             .pullRefresh(pullToRefreshState),
         contentAlignment = Alignment.Center
     ) {
-
-        Column {
-            Text(
-                text = "My lists",
-                fontSize = 24.sp,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
-            )
-            UpdateList(
-                list = list,
-                onSwipeToDelete = viewModel::processIntent,
-                onMonitorClick
-            )
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            item {
+                Text(
+                    text = "Dashboard",
+                    fontSize = 24.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
+                )
+                StatisticsScreen()
+            }
+            item {
+                UpdateList(
+                    list = list,
+                    onSwipeToDelete = viewModel::processIntent,
+                    onMonitorClick
+                )
+            }
         }
         PullRefreshIndicator(
             isRefreshing,
@@ -110,7 +140,191 @@ fun MonitorListScreen(onMonitorClick: (MonitorListsResponse.MonitorListsResponse
                 .align(Alignment.TopCenter)
         )
     }
+    if (isLoading) {
+        ContentWithProgress()
+    }
+}
 
+@Composable
+fun StatisticsScreen() {
+    //Ratings of hotels
+    val typeAmountMap: MutableMap<String, Int> = HashMap()
+    typeAmountMap["until 6"] = Random.nextInt(100)
+    typeAmountMap["7"] = Random.nextInt(100)
+    typeAmountMap["8"] = Random.nextInt(100)
+    typeAmountMap["9"] = Random.nextInt(100)
+    typeAmountMap["10"] = Random.nextInt(100)
+    Surface(
+        modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8),
+        border = BorderStroke(0.1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Column {
+            Text(
+                text = "Monitored Hotels Ratings Distribution",
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+            AndroidView(factory = { ctx ->
+                //  Initialize a View or View hierarchy here
+                PieChart(ctx).apply {
+                    description.isEnabled = false;
+                    data = createPie(typeAmountMap)
+                    invalidate()
+                    val l = legend
+                    l.verticalAlignment = Legend.LegendVerticalAlignment.TOP
+                    l.horizontalAlignment = Legend.LegendHorizontalAlignment.RIGHT
+                    l.orientation = Legend.LegendOrientation.VERTICAL
+                    l.setDrawInside(false)
+                    l.xEntrySpace = 7f
+                    l.yEntrySpace = 0f
+                    l.yOffset = 0f
+
+                    // entry label styling
+                    setDrawEntryLabels(false)
+                }
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .size(120.dp))
+        }
+
+    }
+
+    val barEntries = ArrayList<BarEntry>()
+    barEntries.add(BarEntry(1f, Random.nextInt(40,100).toFloat()))
+    barEntries.add(BarEntry(2f,  Random.nextInt(40,100).toFloat()))
+    barEntries.add(BarEntry(3f, Random.nextInt(40,100).toFloat()))
+    barEntries.add(BarEntry(4f, Random.nextInt(40,100).toFloat()))
+    barEntries.add(BarEntry(5f, Random.nextInt(40,100).toFloat()))
+
+    val xAxisName = ArrayList<String>()
+    xAxisName.add("Electra")
+    xAxisName.add("Electra")
+    xAxisName.add("Zeus")
+    xAxisName.add("Ibis")
+    xAxisName.add("Brown")
+    xAxisName.add("Porto")
+
+    Surface(
+        modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8),
+        border = BorderStroke(0.1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Column {
+            Text(
+                text = "Top 5 cheapest hotels",
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+            AndroidView(factory = { ctx ->
+                //  Initialize a View or View hierarchy here
+                BarChart(ctx).apply {
+                    setDrawBarShadow(false)
+                    setFitBars(true)
+                    setDrawValueAboveBar(false)
+                    setPinchZoom(false)
+                    setDrawGridBackground(false)
+                    setClipValuesToContent(false)
+                    description.isEnabled = false
+                    data = barChart(barEntries)
+                    invalidate()
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT) //set whatever color you prefer
+                    legend.textSize = 10f
+                    legend.formSize = 10f //To set components of x axis
+                    xAxis.textSize = 13f
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.valueFormatter = IndexAxisValueFormatter(xAxisName)
+                    xAxis.setDrawGridLines(false)
+                }
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .size(120.dp))
+        }
+    }
+
+    val typeAmountMapMx: MutableMap<String, Int> = HashMap()
+    typeAmountMapMx["1 Max persons"] = Random.nextInt(100)
+    typeAmountMapMx["2 Max persons"] = Random.nextInt(100)
+    typeAmountMapMx["3 Max persons"] = Random.nextInt(100)
+    typeAmountMapMx["4+ Max persons"] = Random.nextInt(100)
+    Surface(
+        modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8),
+        border = BorderStroke(0.1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Column {
+            Text(
+                text = "Monitored Hotels Rooms Size Distribution",
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+            AndroidView(factory = { ctx ->
+                //  Initialize a View or View hierarchy here
+                PieChart(ctx).apply {
+                    description.isEnabled = false;
+                    data = createPie(typeAmountMapMx)
+                    invalidate()
+                    val l = legend
+                    l.verticalAlignment = Legend.LegendVerticalAlignment.TOP
+                    l.horizontalAlignment = Legend.LegendHorizontalAlignment.RIGHT
+                    l.orientation = Legend.LegendOrientation.VERTICAL
+                    l.setDrawInside(false)
+                    l.xEntrySpace = 7f
+                    l.yEntrySpace = 0f
+                    l.yOffset = 0f
+
+                    // entry label styling
+                    setDrawEntryLabels(false)
+                }
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .size(120.dp))
+        }
+    }
+    //
+}
+
+fun barChart(barEntries: ArrayList<BarEntry>): BarData {
+    val barDataSet = BarDataSet(barEntries, "")
+    barDataSet.setColors(*ColorTemplate.COLORFUL_COLORS)
+    barDataSet.setDrawValues(false)
+    val barData = BarData(barDataSet)
+    barData.barWidth = 0.9f
+    barData.setValueTextSize(0f)
+    barData.setDrawValues(false)
+    return barData
+}
+fun createPie(typeAmountMap: MutableMap<String, Int>):PieData{
+    val pieEntries: ArrayList<PieEntry> = ArrayList<PieEntry>()
+    //initializing colors for the entries
+
+    //initializing colors for the entries
+    val colors = ArrayList<Int>()
+    for (i in 0..5){
+        colors.add(android.graphics.Color.parseColor(String.format("#%06X", 0xFFFFFF and android.graphics.Color.rgb(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256)))))
+    }
+
+    for (type in typeAmountMap.keys) {
+        pieEntries.add(PieEntry(typeAmountMap[type]!!.toFloat(), type))
+    }
+    val pieDataSet = PieDataSet(pieEntries,"")
+    pieDataSet.setValueTextSize(12f)
+    pieDataSet.setColors(colors)
+    val pieData = PieData(pieDataSet)
+    pieData.setDrawValues(false)
+    return pieData
 }
 
 @Composable
@@ -119,8 +333,8 @@ fun UpdateList(
     onSwipeToDelete: (intent: DashboardIntent) -> Unit,
     onMonitorClick: (MonitorListsResponse.MonitorListsResponseItem) -> Unit
 ) {
-    LazyColumn(Modifier.fillMaxSize()) {
-        items(list) {
+    Column(Modifier.fillMaxSize()) {
+        list.forEach {
             val delete = SwipeAction(
                 onSwipe = {
                     onSwipeToDelete(DashboardIntent.onSwipeToDelete(it.monitorListID.toLong()))
@@ -140,7 +354,7 @@ fun UpdateList(
                 swipeThreshold = 200.dp,
                 endActions = listOf(delete)
             ) {
-                MonitorListItem(it,onMonitorClick)
+                MonitorListItem(it, onMonitorClick)
             }
 
         }
@@ -174,7 +388,7 @@ fun MonitorListItem(
                     .weight(1f)
             ) {
                 Text(
-                    text = item.monitorListID.toString()+". ",
+                    text = item.monitorListID.toString() + ". ",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

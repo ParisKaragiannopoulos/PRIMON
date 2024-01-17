@@ -15,7 +15,7 @@ data class HotelInfoResponse(
     @SerializedName("name")
     val name: String,
     @SerializedName("rooms")
-    val rooms: List<Room>,
+    var rooms: List<Room>,
     @SerializedName("score")
     val score: String,
     @SerializedName("url")
