@@ -1,13 +1,12 @@
 package com.parisjohn.pricemonitoring.features.dashboard.viewmodel
 
-import androidx.compose.runtime.MutableIntState
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.parisjohn.pricemonitoring.base.BaseViewModel
 import com.parisjohn.pricemonitoring.base.data.SessionManager
 import com.parisjohn.pricemonitoring.data.network.request.MonitorListRequest
-import com.parisjohn.pricemonitoring.data.network.request.MonitorListUpdateRequest
+import com.parisjohn.pricemonitoring.data.network.request.UpdateMonitorListRequest
 import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListsResponse
 import com.parisjohn.pricemonitoring.domain.repositories.MonitorRepository
@@ -81,19 +80,27 @@ class DashboardViewModel @Inject constructor(
     }
 
     private fun searchHotelDetails(link: String) {
+        _dashboardEvent.tryEmit(
+            DashboardEvents.Loading
+        )
         viewModelScope.launch {
-            monitorRepository.searchHotelDetails(link)
-                .onStart {
-                    _dashboardEvent.emit(
-                        DashboardEvents.Loading
-                    )
-                }.catch {
-                    val message = "Something went wrong"
-                    _dashboardEvent.emit(DashboardEvents.Failure(message))
-                }.collect {
-                    _dashboardEvent.emit(DashboardEvents.Success)
-                    _hotelDetails.emit(it)
-                }
+            try{
+                monitorRepository.searchHotelDetails(link)
+                    .onStart {
+                        _dashboardEvent.emit(
+                            DashboardEvents.Loading
+                        )
+                    }.catch {
+                        val message = "Something went wrong"
+                        _dashboardEvent.emit(DashboardEvents.Failure(message))
+                    }.collect {
+                        _dashboardEvent.emit(DashboardEvents.Success)
+                        _hotelDetails.emit(it)
+                    }
+            } catch (e : Exception){
+                val message = "Something went wrong"
+                _dashboardEvent.tryEmit(DashboardEvents.Failure(message))
+            }
         }
     }
 
@@ -116,9 +123,13 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun getGraph(roomID: Int) {
+    fun getGraph(roomID: Int,size: Int = 0) {
         viewModelScope.launch {
-            monitorRepository.getPricesOfSpecificRoom(roomID.toString())
+            if(roomID==-1){
+                _graph.emit(GraphPrice(emptyList(), emptyList()))
+                return@launch
+            }
+            monitorRepository.getPricesOfSpecificRoom(roomID.toString(), size)
                 .onStart {
                     _dashboardEvent.emit(
                         DashboardEvents.Loading
@@ -127,8 +138,15 @@ class DashboardViewModel @Inject constructor(
                     val message = "Something went wrong"
                     _dashboardEvent.emit(DashboardEvents.Failure(message))
                 }.collect {
+                    if(size==0 && it.page.totalElements != 0){
+                        getGraph(roomID,it.page.totalElements)
+                        return@collect
+                    }
                     _dashboardEvent.emit(DashboardEvents.Success)
-                    _graph.emit(it.toGraph())
+                    it.embedded?.let { t->
+                        if(t.priceInfoList.isEmpty()) return@collect
+                        _graph.emit(it.toGraph())
+                    }?: return@collect
                 }
         }
     }
@@ -184,7 +202,7 @@ class DashboardViewModel @Inject constructor(
                         val rooms = it.rooms.map { t -> t.roomID }.toMutableList()
                         rooms.add(roomID)
                         monitorRepository.updateMonitorList(
-                            MonitorListUpdateRequest(
+                            UpdateMonitorListRequest(
                                 listName,
                                 rooms,
                                 it.monitorListID

@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class PriceRoomResponse(
     @SerializedName("_embedded")
-    val embedded: Embedded,
+    val embedded: Embedded = Embedded(),
     @SerializedName("_links")
     val links: Links,
     @SerializedName("page")
@@ -13,7 +13,7 @@ data class PriceRoomResponse(
 ) {
     data class Embedded(
         @SerializedName("priceInfoList")
-        var priceInfoList: List<PriceInfo>
+        var priceInfoList: List<PriceInfo> = emptyList()
     ) {
         data class PriceInfo(
             @SerializedName("attributes")

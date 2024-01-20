@@ -320,8 +320,8 @@ fun createPie(typeAmountMap: MutableMap<String, Int>):PieData{
         pieEntries.add(PieEntry(typeAmountMap[type]!!.toFloat(), type))
     }
     val pieDataSet = PieDataSet(pieEntries,"")
-    pieDataSet.setValueTextSize(12f)
-    pieDataSet.setColors(colors)
+    pieDataSet.valueTextSize = 12f
+    pieDataSet.colors = colors
     val pieData = PieData(pieDataSet)
     pieData.setDrawValues(false)
     return pieData
@@ -334,7 +334,7 @@ fun UpdateList(
     onMonitorClick: (MonitorListsResponse.MonitorListsResponseItem) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
-        list.forEach {
+        list.forEachIndexed { index, it ->
             val delete = SwipeAction(
                 onSwipe = {
                     onSwipeToDelete(DashboardIntent.onSwipeToDelete(it.monitorListID.toLong()))
@@ -354,7 +354,7 @@ fun UpdateList(
                 swipeThreshold = 200.dp,
                 endActions = listOf(delete)
             ) {
-                MonitorListItem(it, onMonitorClick)
+                MonitorListItem(index+1,it, onMonitorClick)
             }
 
         }
@@ -363,6 +363,7 @@ fun UpdateList(
 
 @Composable
 fun MonitorListItem(
+    index: Int,
     item: MonitorListsResponse.MonitorListsResponseItem,
     onMonitorClick: (MonitorListsResponse.MonitorListsResponseItem) -> Unit
 ) {
@@ -388,7 +389,7 @@ fun MonitorListItem(
                     .weight(1f)
             ) {
                 Text(
-                    text = item.monitorListID.toString() + ". ",
+                    text = "$index. ",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

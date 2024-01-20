@@ -35,11 +35,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -64,6 +69,7 @@ import com.parisjohn.pricemonitoring.features.details.GraphPrice
 import com.parisjohn.pricemonitoring.ui.theme.PriceMonitoringTheme
 import com.parisjohn.pricemonitoring.ui.theme.Purple40
 import com.parisjohn.pricemonitoring.utils.showToast
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
 private val dialogState by lazy { mutableStateOf(false) }
@@ -72,18 +78,16 @@ private val dialogRoom by lazy { mutableIntStateOf(-1) }
 @Composable
 fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
     var isLoading by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("https://www.booking.com/hotel/it/dea-vatican-domus.en-gb.html") }
+    var searchText by remember { mutableStateOf("") }
     val response by viewModel.hotelDetails.collectAsState()
     val monitorLists by viewModel.list.collectAsState()
-
     val context = LocalContext.current
     var graphPrice by remember { mutableStateOf(GraphPrice(emptyList(), emptyList())) }
     if (graphPrice.axis_x.isNotEmpty()) {
         BottomSheet(graphPrice) {
-            graphPrice = graphPrice.copy(axis_x = emptyList())
+            viewModel.getGraph(-1)
         }
     }
-
 
     LaunchedEffect(key1 = true) {
         viewModel.dashboardEvent.collectLatest {
@@ -104,7 +108,6 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
             graphPrice = it
         }
     }
-
     Box {
         Box(modifier = Modifier.height(250.dp)) {
             Image(
@@ -119,8 +122,9 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 value = searchText,
                 onValueChange = {
                     searchText = it
-                    if (it.contains(".html"))
+                    if (it.contains(".html")) {
                         viewModel.processIntent(DashboardIntent.searchText(searchText))
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

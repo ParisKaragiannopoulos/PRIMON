@@ -1,13 +1,11 @@
 package com.parisjohn.pricemonitoring.domain.repositories
 
 import android.content.Context
-import android.content.res.AssetManager
-import android.util.Log
 import com.google.gson.Gson
 import com.parisjohn.pricemonitoring.base.data.MonitorApiService
 import com.parisjohn.pricemonitoring.data.network.request.MonitorListRequest
-import com.parisjohn.pricemonitoring.data.network.request.MonitorListUpdateRequest
 import com.parisjohn.pricemonitoring.data.network.request.SearchHotelRequest
+import com.parisjohn.pricemonitoring.data.network.request.UpdateMonitorListRequest
 import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListResponse
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListsResponse
@@ -45,7 +43,7 @@ class MonitorRepository @Inject constructor(
         emit(service.deleteMonitorList(id))
     }.flowOn(dispatcher)
 
-    suspend fun updateMonitorList(monitorListRequest: MonitorListUpdateRequest): Flow<ResponseBody> = flow {
+    suspend fun updateMonitorList(monitorListRequest: UpdateMonitorListRequest): Flow<ResponseBody> = flow {
       emit(service.updateMonitorList(monitorListRequest))
     }.flowOn(dispatcher)
     suspend fun searchHotelDetails(link: String): Flow<HotelInfoResponse> {
@@ -66,7 +64,7 @@ class MonitorRepository @Inject constructor(
         return flow{emit(fl)}
     }
 
-    suspend fun getPricesOfSpecificRoom(id: String): Flow<PriceRoomResponse> = flow {
-        emit(service.getPricesOfSpecificRoom(id))
+    suspend fun getPricesOfSpecificRoom(id: String, size: Int): Flow<PriceRoomResponse> = flow {
+        emit(service.getPricesOfSpecificRoom(id,size))
     }.flowOn(dispatcher)
 }

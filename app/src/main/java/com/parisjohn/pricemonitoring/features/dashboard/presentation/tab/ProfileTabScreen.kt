@@ -1,4 +1,7 @@
 package com.parisjohn.pricemonitoring.features.dashboard.presentation.tab
+
+import android.content.Context
+import android.content.Intent
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -10,9 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -43,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -64,6 +71,7 @@ data class FeatureList(
     val name: String,
     val listIcon: DCodeIcon,
 )
+
 sealed class DCodeIcon {
     data class ImageVectorIcon(val imageVector: ImageVector) : DCodeIcon()
     data class DrawableResourceIcon(@DrawableRes val id: Int) : DCodeIcon()
@@ -78,12 +86,13 @@ object MyIcons {
     val Logout = Icons.Default.Logout
     val KeyboardArrowRight = Icons.Default.KeyboardArrowRight
 }
+
 val moreOptionsList = listOf(
-    FeatureList("Notifications",DCodeIcon.ImageVectorIcon(MyIcons.Notification)),
+    FeatureList("Notifications", DCodeIcon.ImageVectorIcon(MyIcons.Notification)),
     FeatureList("About", DCodeIcon.ImageVectorIcon(MyIcons.Info)),
     FeatureList("Share App", DCodeIcon.ImageVectorIcon(MyIcons.Share)),
-    FeatureList("Logout",DCodeIcon.ImageVectorIcon(MyIcons.Logout)),
-    )
+    FeatureList("Logout", DCodeIcon.ImageVectorIcon(MyIcons.Logout)),
+)
 
 @OptIn(
     ExperimentalComposeUiApi::class,
@@ -239,6 +248,7 @@ fun MainProfileContent() {
         }
     }
 }
+
 @Composable
 fun SubscriptionView() {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.pro))
@@ -255,9 +265,11 @@ fun SubscriptionView() {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier
-                .padding(5.dp)
-                .weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .padding(5.dp)
+                    .weight(1f)
+            ) {
                 Row(
                     modifier = Modifier
                         .padding(vertical = 5.dp)
@@ -275,7 +287,7 @@ fun SubscriptionView() {
                     text = "4,99 €",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
-                    )
+                )
                 Text(
                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
                     text = "paid monthly",
@@ -303,8 +315,31 @@ fun SubscriptionView() {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FooterContent(onLogoutClick: ()-> Unit) {
+fun FooterContent(onLogoutClick: () -> Unit) {
+    val openDialog = remember { mutableStateOf(false) }
+    if (openDialog.value) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                openDialog.value = false
+            }
+        ) {
+            Surface(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "PRIMON is a real-life real-data price monitoring and hotel analytics app.")
+                }
+            }
+        }
+    }
+
+
+    val context: Context = LocalContext.current
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -322,6 +357,10 @@ fun FooterContent(onLogoutClick: ()-> Unit) {
                 MoreOptionsComp(featureList = it) {
                     if (it.name == "Logout") {
                         onLogoutClick.invoke()
+                    } else if (it.name == "Share App") {
+                        shareAppPlayStoreUrl(context)
+                    } else if (it.name == "About") {
+                        openDialog.value = true
                     }
                 }
             }
@@ -329,6 +368,7 @@ fun FooterContent(onLogoutClick: ()-> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreOptionsComp(
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -336,6 +376,7 @@ fun MoreOptionsComp(
     onClick: () -> Unit,
 ) {
     var checked by remember { mutableStateOf(true) }
+
     LaunchedEffect(key1 = true) {
         viewModel.notificationStatus.collectLatest {
             checked = it
@@ -374,21 +415,38 @@ fun MoreOptionsComp(
                 style = MaterialTheme.typography.labelLarge
             )
         }
-        if(featureList.name == "Notifications"){
-            Switch(
-                checked = checked,
-                onCheckedChange = {
-                    viewModel.setNotificationEnabled(it)
-                }
-            )
-        }else{
-            Icon(
-                imageVector = MyIcons.KeyboardArrowRight,
-                contentDescription = null,
-                modifier = Modifier.padding(4.dp)
-            )
+        when (featureList.name) {
+            "Notifications" -> {
+                Switch(
+                    checked = checked,
+                    onCheckedChange = {
+                        viewModel.setNotificationEnabled(it)
+                    }
+                )
+            }
+
+            else -> {
+                Icon(
+                    imageVector = MyIcons.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.padding(4.dp)
+                )
+            }
         }
     }
+}
+
+fun shareAppPlayStoreUrl(context: Context) {
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(
+            Intent.EXTRA_TEXT,
+            "Check out this awesome app\n " + "https://play.google.com/store/apps/details?id=" + context.applicationInfo.packageName
+        )
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    context.startActivity(shareIntent)
 }
 
 @Preview(showBackground = true)

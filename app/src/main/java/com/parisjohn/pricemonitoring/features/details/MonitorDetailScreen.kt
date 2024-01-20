@@ -2,7 +2,6 @@ package com.parisjohn.pricemonitoring.features.details
 
 
 import android.annotation.SuppressLint
-import android.graphics.Color
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -10,10 +9,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +69,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlin.random.Random
+import kotlin.random.nextInt
 
 
 @Composable
@@ -77,7 +83,7 @@ fun MonitorDetailScreen(
     val response by viewModel.list.collectAsState()
     if (graphPrice.axis_x.isNotEmpty()) {
         BottomSheet(graphPrice) {
-            graphPrice = graphPrice.copy(axis_x = emptyList())
+            viewModel.getGraph(-1)
         }
     }
     val context = LocalContext.current
@@ -127,66 +133,66 @@ fun MonitorDetailScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(graphPrice: GraphPrice, onDismiss: () -> Unit) {
-    val modalBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val coroutineScope = rememberCoroutineScope()
-    ModalBottomSheet(
-        modifier = Modifier.fillMaxSize(),
-        onDismissRequest = { onDismiss() },
-        sheetState = modalBottomSheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-    ) {
-        coroutineScope.launch {
-            modalBottomSheetState.show()
-        }
-        AndroidView(
-            factory = { ctx ->
-                //  Initialize a View or View hierarchy here
-                LineChart(ctx).apply {
-                    description.isEnabled = false;
-                    // enable touch gestures
-                    setTouchEnabled(true);
-                    dragDecelerationFrictionCoef = 0.9f;
-                    // enable scaling and dragging
-                    isDragEnabled = true;
-                    setScaleEnabled(true);
-                    setDrawGridBackground(false);
-                    isHighlightPerDragEnabled = true;
-                    // get the legend (only possible after setting data)
-                    // get the legend (only possible after setting data)
-                    val l: Legend = legend
-                    l.isEnabled = false
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                onDismiss()
+            }
+        ) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .wrapContentHeight(),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    AndroidView(
+                        factory = { ctx ->
+                            //  Initialize a View or View hierarchy here
+                            LineChart(ctx).apply {
+                                description.isEnabled = false;
+                                // enable touch gestures
+                                setTouchEnabled(true);
+                                dragDecelerationFrictionCoef = 0.9f;
+                                // enable scaling and dragging
+                                isDragEnabled = true;
+                                setScaleEnabled(true);
+                                setDrawGridBackground(false);
+                                isHighlightPerDragEnabled = true;
+                                // get the legend (only possible after setting data)
+                                // get the legend (only possible after setting data)
+                                val l: Legend = legend
+                                l.isEnabled = false
 
-                    val xAxis: XAxis = xAxis
-                    xAxis.position = XAxis.XAxisPosition.TOP_INSIDE
-                    xAxis.textSize = 10f
-                    xAxis.textColor = Color.WHITE
-                    xAxis.setDrawAxisLine(false)
-                    xAxis.setDrawGridLines(true)
-                    xAxis.textColor = Color.rgb(255, 192, 56)
-                    xAxis.setCenterAxisLabels(true)
-                    xAxis.granularity = 1f // one hour
+                                val xAxis: XAxis = xAxis
+                                xAxis.position = XAxis.XAxisPosition.BOTTOM
+                                xAxis.labelRotationAngle = 60f
+                                xAxis.textSize = 10f
+                                xAxis.granularity = 1f
+                                xAxis.labelCount = graphPrice.axis_x.size // important
+                                xAxis.textColor = android.graphics.Color.BLACK
+                                xAxis.setDrawAxisLine(true);
+                                xAxis.setDrawGridLines(false);
+                                xAxis.setDrawLabels(true);
 
-                    xAxis.valueFormatter = XDateFormatter(graphPrice.axis_x)
-                    // set an alternative background color
-                    setBackgroundColor(Color.WHITE);
-                    setViewPortOffsets(0f, 0f, 0f, 0f)
-                    val values = ArrayList(graphPrice.axis_y.mapIndexed { index, d ->
-                        Entry(
-                            index.toFloat(),
-                            d.toFloat()
-                        )
-                    }.toList())
-                    data = lineChart(values)
-                    invalidate()
+                                xAxis.valueFormatter = XDateFormatter(graphPrice.axis_x)
+                                // set an alternative background color
+                                setBackgroundColor(android.graphics.Color.WHITE);
+                                val values = ArrayList<Entry>()
+                                graphPrice.axis_y.forEachIndexed { index, d ->
+                                    values.add(Entry(
+                                        index.toFloat(),
+                                        d.toFloat()
+                                    ))
+                                }
+
+                                data = lineChart(values)
+                                invalidate()
+                            }
+                        }, modifier = Modifier
+                            .fillMaxWidth()
+                            .size(350.dp))
                 }
-            }, modifier = Modifier
-                .fillMaxWidth()
-                .size(120.dp)
-        )
-        Column(modifier = Modifier.padding(10.dp)) {
-
-        }
-
+            }
     }
 }
 
@@ -198,13 +204,13 @@ fun lineChart(values: ArrayList<Entry>): LineData {
     set1.lineWidth = 1.5f
     set1.setDrawCircles(true)
     set1.setDrawValues(false)
+    set1.setDrawFilled(true)
     set1.fillAlpha = 65
     set1.fillColor = ColorTemplate.getHoloBlue()
-    set1.highLightColor = Color.rgb(244, 117, 117)
-    set1.setDrawCircleHole(false)
-
+    set1.highLightColor = android.graphics.Color.rgb(244, 117, 117)
+    set1.setDrawCircleHole(true)
     val data = LineData(set1)
-    data.setValueTextColor(Color.WHITE)
+    data.setValueTextColor(android.graphics.Color.WHITE)
     data.setValueTextSize(9f)
     return data
 }
@@ -213,6 +219,9 @@ private class XDateFormatter(private val axisX: List<String>) : ValueFormatter()
     override fun getFormattedValue(value: Float): String {
         if(value<0 || value>=axisX.size)
             return ""
+        if(value.rem(1) != 0.0f){
+            return ""
+        }
         Log.e("testt", value.toString())
         return axisX[value.toInt()]
     }
@@ -242,7 +251,7 @@ fun SectionHeader(
                     modifier = Modifier.weight(1f),
                     text = item.name,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Image(
                     painter = painterResource(id = R.drawable.ic_price_history),

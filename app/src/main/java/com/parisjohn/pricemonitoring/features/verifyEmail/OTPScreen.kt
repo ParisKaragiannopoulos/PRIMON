@@ -71,7 +71,7 @@ fun OTPScreen(
         }
     }
     Image(
-        painter = painterResource(id = R.drawable.login_bg),
+        painter = painterResource(id = R.drawable.email_verify_bg),
         contentDescription = stringResource(id = R.string.login_background),
         modifier = Modifier.fillMaxSize(),
         contentScale = ContentScale.Crop

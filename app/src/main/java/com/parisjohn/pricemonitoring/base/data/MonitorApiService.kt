@@ -2,8 +2,8 @@ package com.parisjohn.pricemonitoring.base.data
 
 
 import com.parisjohn.pricemonitoring.data.network.request.MonitorListRequest
-import com.parisjohn.pricemonitoring.data.network.request.MonitorListUpdateRequest
 import com.parisjohn.pricemonitoring.data.network.request.SearchHotelRequest
+import com.parisjohn.pricemonitoring.data.network.request.UpdateMonitorListRequest
 import com.parisjohn.pricemonitoring.data.network.request.UserLoginRequest
 import com.parisjohn.pricemonitoring.data.network.request.UserRegisterRequest
 import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
@@ -46,8 +46,8 @@ interface MonitorApiService {
     suspend fun deleteMonitorList(@Path("id") id: Long): ResponseBody
 
     @PUT("monitor_list")
-    suspend fun updateMonitorList(@Body monitorListRequest: MonitorListUpdateRequest): ResponseBody
+    suspend fun updateMonitorList(@Body monitorListRequest: UpdateMonitorListRequest): ResponseBody
 
     @GET("/prices/{roomID}")
-    suspend fun getPricesOfSpecificRoom(@Path("roomID") roomID: String): PriceRoomResponse
+    suspend fun getPricesOfSpecificRoom(@Path("roomID") roomID: String, @Query("size") size: Int): PriceRoomResponse
 }

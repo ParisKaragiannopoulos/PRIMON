@@ -10,7 +10,7 @@ data class MonitorListRequest(
     val rooms: List<Int>,
 )
 
-data class MonitorListUpdateRequest(
+data class UpdateMonitorListRequest(
     @SerializedName("name")
     val name: String,
     @SerializedName("rooms")

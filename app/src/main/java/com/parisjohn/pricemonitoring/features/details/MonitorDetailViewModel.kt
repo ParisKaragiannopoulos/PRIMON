@@ -1,6 +1,5 @@
 package com.parisjohn.pricemonitoring.features.details
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.parisjohn.pricemonitoring.base.BaseViewModel
@@ -18,6 +17,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+
 
 @HiltViewModel
 class MonitorDetailViewModel @Inject constructor(
@@ -64,9 +64,13 @@ class MonitorDetailViewModel @Inject constructor(
 
     }
 
-    fun getGraph(roomID: Int) {
+    fun getGraph(roomID: Int,size: Int = 0) {
         viewModelScope.launch {
-            monitorRepository.getPricesOfSpecificRoom(roomID.toString())
+            if(roomID==-1){
+                _graph.emit(GraphPrice(emptyList(), emptyList()))
+                return@launch
+            }
+            monitorRepository.getPricesOfSpecificRoom(roomID.toString(),size)
                 .onStart {
                     _dashboardEvent.emit(
                         DashboardEvents.Loading
@@ -75,8 +79,15 @@ class MonitorDetailViewModel @Inject constructor(
                     val message = "Something went wrong"
                     _dashboardEvent.emit(DashboardEvents.Failure(message))
                 }.collect {
+                    if(size==0 && it.page.totalElements != 0){
+                        getGraph(roomID,it.page.totalElements)
+                        return@collect
+                    }
                     _dashboardEvent.emit(DashboardEvents.Success)
-                    _graph.emit(it.toGraph())
+                    it.embedded?.let { t->
+                        if(t.priceInfoList.isEmpty()) return@collect
+                        _graph.emit(it.toGraph())
+                    }?: return@collect
                 }
         }
     }
@@ -85,9 +96,8 @@ class MonitorDetailViewModel @Inject constructor(
 fun PriceRoomResponse.toGraph(): GraphPrice {
     this.embedded.priceInfoList = this.embedded.priceInfoList.map { it.copy(date = it.timestamp.split(".")[0].toDateTime().plusDays(it.distanceDays.toLong()).toStringPattern())}
     val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-    val result = this.embedded.priceInfoList.sortedBy {
-        LocalDate.parse(it.date, dateTimeFormatter)
-    }.distinctBy { it.date }.groupBy { it.date }.mapValues { it.value.map { pair -> pair.price }.average() }
+    val formatter = DateTimeFormatter.ofPattern("MMM/yyyy")
+    val result = this.embedded.priceInfoList.groupBy { LocalDate.parse(it.date, dateTimeFormatter).format(formatter) }.mapValues { it.value.map { pair -> pair.price }.average() }
     return GraphPrice(axis_x = result.map { it.key },
         axis_y = result.map { it.value })
 }
