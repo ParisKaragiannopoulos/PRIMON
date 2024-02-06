@@ -63,8 +63,26 @@ class MonitorRepository @Inject constructor(
         }
         return flow{emit(fl)}
     }
+    suspend fun getHotelByID(id: Long): Flow<HotelInfoResponse> {
+        val fl = service.getHotelByID(id)
+        if(fl.rooms.isEmpty()){ // For test purpose
+            try {
+                val assetManager = context.assets
+                val ims = assetManager.open("hotel_search.json")
+                val gson = Gson()
+                val reader: Reader = InputStreamReader(ims)
+                val gsonObj:HotelInfoResponse  = gson.fromJson(reader, HotelInfoResponse::class.java)
+                fl.rooms = gsonObj.rooms
+            } catch (e: IOException) {
+                e.printStackTrace()
+                return flow{emit(fl)}
+            }
+        }
+        return flow{emit(fl)}
+    }
 
-    suspend fun getPricesOfSpecificRoom(id: String, size: Int): Flow<PriceRoomResponse> = flow {
-        emit(service.getPricesOfSpecificRoom(id,size))
+
+    suspend fun getPricesOfSpecificRoom(monitorList: String,id: String, size: Int): Flow<PriceRoomResponse> = flow {
+        emit(service.getPricesOfSpecificRoom(monitorList,id,size))
     }.flowOn(dispatcher)
 }

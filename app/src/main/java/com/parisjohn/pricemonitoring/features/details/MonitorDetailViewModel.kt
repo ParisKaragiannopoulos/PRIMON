@@ -4,12 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.parisjohn.pricemonitoring.base.BaseViewModel
 import com.parisjohn.pricemonitoring.base.data.SessionManager
+import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListResponse
 import com.parisjohn.pricemonitoring.data.network.response.PriceRoomResponse
 import com.parisjohn.pricemonitoring.domain.repositories.MonitorRepository
 import com.parisjohn.pricemonitoring.features.dashboard.viewmodel.DashboardEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -32,6 +34,10 @@ class MonitorDetailViewModel @Inject constructor(
     private val _graph: MutableStateFlow<GraphPrice> = MutableStateFlow(GraphPrice(emptyList(),
         emptyList()
     ))
+
+    private val _hotelDetails = MutableStateFlow<HotelInfoResponse?>(null)
+    val hotelDetails = _hotelDetails.asStateFlow()
+
     var graph = _graph
         private set
     var dashboardEvent = _dashboardEvent
@@ -43,9 +49,10 @@ class MonitorDetailViewModel @Inject constructor(
         )
     var list = _list
         private set
-
+    var monitorListID = ""
     init {
         savedStateHandle.get<String>("monitorId")?.let {
+            monitorListID = it
             viewModelScope.launch {
                 monitorRepository.getListDetails(it)
                     .onStart {
@@ -61,7 +68,31 @@ class MonitorDetailViewModel @Inject constructor(
                     }
             }
         }
+    }
 
+    fun getHotelByID(id: String) {
+        _dashboardEvent.tryEmit(
+            DashboardEvents.Loading
+        )
+        viewModelScope.launch {
+            try{
+                monitorRepository.getHotelByID(id.toLong())
+                    .onStart {
+                        _dashboardEvent.emit(
+                            DashboardEvents.Loading
+                        )
+                    }.catch {
+                        val message = "Something went wrong"
+                        _dashboardEvent.emit(DashboardEvents.Failure(message))
+                    }.collect {
+                        _dashboardEvent.emit(DashboardEvents.Success)
+                        _hotelDetails.emit(it)
+                    }
+            } catch (e : Exception){
+                val message = "Something went wrong"
+                _dashboardEvent.tryEmit(DashboardEvents.Failure(message))
+            }
+        }
     }
 
     fun getGraph(roomID: Int,size: Int = 0) {
@@ -70,7 +101,7 @@ class MonitorDetailViewModel @Inject constructor(
                 _graph.emit(GraphPrice(emptyList(), emptyList()))
                 return@launch
             }
-            monitorRepository.getPricesOfSpecificRoom(roomID.toString(),size)
+            monitorRepository.getPricesOfSpecificRoom(monitorListID,roomID.toString(),size)
                 .onStart {
                     _dashboardEvent.emit(
                         DashboardEvents.Loading

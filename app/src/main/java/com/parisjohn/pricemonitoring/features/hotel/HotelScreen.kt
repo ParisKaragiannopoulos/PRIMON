@@ -1,4 +1,4 @@
-package com.parisjohn.pricemonitoring.features.dashboard.presentation.tab
+package com.parisjohn.pricemonitoring.features.hotel
 
 import android.content.Intent
 import android.net.Uri
@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -76,9 +78,10 @@ private val dialogState by lazy { mutableStateOf(false) }
 private val dialogRoom by lazy { mutableIntStateOf(-1) }
 
 @Composable
-fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
+fun HotelScreen(
+    onBackClick: () -> Unit,
+    viewModel: HotelViewModel = hiltViewModel()) {
     var isLoading by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
     val response by viewModel.hotelDetails.collectAsState()
     val monitorLists by viewModel.list.collectAsState()
     val context = LocalContext.current
@@ -107,28 +110,13 @@ fun SearchHotelScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                     .height(250.dp),
                 contentScale = ContentScale.Crop
             )
-            TextField(
-                value = searchText,
-                onValueChange = {
-                    searchText = it
-                    if (it.contains(".html")) {
-                        viewModel.processIntent(DashboardIntent.searchText(searchText))
-                    }
-                },
+            Image(
+                painter = painterResource(id = R.drawable.ic_back),
+                contentDescription = stringResource(id = R.string.login_background),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .padding(12.dp),
-                shape = RoundedCornerShape(8.dp),
-                trailingIcon = {
-                    Icon(Icons.Filled.Search, "", tint = Purple40)
-                },
-                placeholder = { Text(text = "Search") },
-                colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = Color.White,
-                    focusedIndicatorColor = Color.Transparent, //hide the indicator
-                    unfocusedIndicatorColor = Color.Transparent
-                )
+                    .padding(8.dp)
+                    .size(32.dp)
+                    .clickable { onBackClick() }
             )
         }
         Column(
@@ -276,7 +264,7 @@ fun SearchHotelPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SearchHotelScreen()
+            HotelScreen({})
         }
     }
 }

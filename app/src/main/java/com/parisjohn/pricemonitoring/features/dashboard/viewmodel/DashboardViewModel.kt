@@ -10,6 +10,7 @@ import com.parisjohn.pricemonitoring.data.network.request.UpdateMonitorListReque
 import com.parisjohn.pricemonitoring.data.network.response.HotelInfoResponse
 import com.parisjohn.pricemonitoring.data.network.response.MonitorListsResponse
 import com.parisjohn.pricemonitoring.domain.repositories.MonitorRepository
+import com.parisjohn.pricemonitoring.domain.repositories.UserRepository
 import com.parisjohn.pricemonitoring.features.dashboard.DashboardIntent
 import com.parisjohn.pricemonitoring.features.details.GraphPrice
 import com.parisjohn.pricemonitoring.features.details.toGraph
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import java.util.Random
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -27,7 +29,8 @@ import javax.inject.Inject
 class DashboardViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val monitorRepository: MonitorRepository,
-) : BaseViewModel(sessionManager) {
+    private val userRepository: UserRepository,
+    ) : BaseViewModel(sessionManager) {
     private val _dashboardEvent: MutableStateFlow<DashboardEvents> =
         MutableStateFlow(DashboardEvents.Loading)
     var dashboardEvent = _dashboardEvent
@@ -38,15 +41,6 @@ class DashboardViewModel @Inject constructor(
         MutableStateFlow(
             emptyList()
         )
-
-    private val _graph: MutableStateFlow<GraphPrice> = MutableStateFlow(
-        GraphPrice(
-            emptyList(),
-            emptyList()
-        )
-    )
-    var graph = _graph
-        private set
 
     private val _hotelDetails = MutableStateFlow<HotelInfoResponse?>(null)
     val hotelDetails = _hotelDetails.asStateFlow()
@@ -59,8 +53,9 @@ class DashboardViewModel @Inject constructor(
 
     init {
         showMonitorLists()
-        if (sessionManager.getNotificationStatus())
+        if (sessionManager.getNotificationStatus() && kotlin.random.Random.nextInt(0,2)==1) { // Test purpose
             scheduleReminder(1000, TimeUnit.MILLISECONDS)
+        }
     }
 
     fun processIntent(intent: DashboardIntent) {
@@ -123,13 +118,9 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    fun getGraph(roomID: Int,size: Int = 0) {
+    fun upgradeSubscription(){
         viewModelScope.launch {
-            if(roomID==-1){
-                _graph.emit(GraphPrice(emptyList(), emptyList()))
-                return@launch
-            }
-            monitorRepository.getPricesOfSpecificRoom(roomID.toString(), size)
+            userRepository.upgradeSubscription()
                 .onStart {
                     _dashboardEvent.emit(
                         DashboardEvents.Loading
@@ -138,15 +129,9 @@ class DashboardViewModel @Inject constructor(
                     val message = "Something went wrong"
                     _dashboardEvent.emit(DashboardEvents.Failure(message))
                 }.collect {
-                    if(size==0 && it.page.totalElements != 0){
-                        getGraph(roomID,it.page.totalElements)
-                        return@collect
-                    }
-                    _dashboardEvent.emit(DashboardEvents.Success)
-                    it.embedded?.let { t->
-                        if(t.priceInfoList.isEmpty()) return@collect
-                        _graph.emit(it.toGraph())
-                    }?: return@collect
+                    it.body()?.let { it1 -> sessionManager.saveAuthToken(it1) }
+                    val message = "Congratulations, You are now premium!"
+                    _dashboardEvent.emit(DashboardEvents.Failure(message))
                 }
         }
     }
@@ -205,10 +190,11 @@ class DashboardViewModel @Inject constructor(
                             UpdateMonitorListRequest(
                                 listName,
                                 rooms,
-                                it.monitorListID
+                                it.monitorListID,
+                                listOf(30,70)
                             )
                         ).catch {
-                            var message = "Something went wrong"
+                            val message = "Something went wrong"
                             _dashboardEvent.emit(DashboardEvents.Failure(message))
                         }.collect {
                             showMonitorLists()
@@ -219,7 +205,7 @@ class DashboardViewModel @Inject constructor(
             }
         } else {
             viewModelScope.launch {
-                monitorRepository.postNewMonitorList(MonitorListRequest(listName, listOf(roomID)))
+                monitorRepository.postNewMonitorList(MonitorListRequest(listName, listOf(roomID),listOf(30,70)))
                     .onStart {
                         _dashboardEvent.emit(
                             DashboardEvents.Loading

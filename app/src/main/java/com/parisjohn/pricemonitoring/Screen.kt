@@ -22,4 +22,13 @@ sealed class Screen(
     ) {
         fun createRoute(monitorId: String) = "monitorList/${monitorId}"
     }
+
+    object HotelScreen : Screen(
+        route = "hotel/{hotelId}",
+        navArguments = listOf(navArgument("hotelId") {
+            type = NavType.StringType
+        })
+    ) {
+        fun createRoute(hotelId: Long) = "hotel/${hotelId}"
+    }
 }

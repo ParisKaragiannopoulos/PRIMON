@@ -28,4 +28,8 @@ class UserRepository @Inject constructor(private val service: MonitorApiService,
         Thread.sleep(3000)
         emit("")
     }.flowOn(dispatcher)
+
+    suspend fun upgradeSubscription(): Flow<Response<String>> = flow {
+        emit(service.upgradeSubscription())
+    }.flowOn(dispatcher)
 }

@@ -12,6 +12,7 @@ import com.parisjohn.pricemonitoring.features.dashboard.presentation.tab.Monitor
 import com.parisjohn.pricemonitoring.features.dashboard.presentation.tab.ProfileTabScreen
 import com.parisjohn.pricemonitoring.features.dashboard.presentation.tab.SearchHotelScreen
 import com.parisjohn.pricemonitoring.features.details.MonitorDetailScreen
+import com.parisjohn.pricemonitoring.features.hotel.HotelScreen
 import com.parisjohn.pricemonitoring.features.login.composable.LoginScreen
 import com.parisjohn.pricemonitoring.features.login.composable.SignupScreen
 import com.parisjohn.pricemonitoring.features.splash.SplashScreen
@@ -94,7 +95,18 @@ fun HomeNavHost(
         ) {
             MonitorDetailScreen(
                 onBackClick = { navController.navigateUp() },
+                onHotelClick = {
+                    navController.navigate(Screen.HotelScreen.createRoute(it))
+                }
             )
+        }
+
+
+        composable(
+            route = Screen.HotelScreen.route,
+            arguments = Screen.HotelScreen.navArguments
+        ) {
+            HotelScreen(onBackClick = { navController.navigateUp()})
         }
     }
 }

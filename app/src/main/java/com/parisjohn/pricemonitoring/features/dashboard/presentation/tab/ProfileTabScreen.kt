@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowRight
@@ -121,7 +120,7 @@ fun ProfileTabScreen(viewModel: DashboardViewModel = hiltViewModel()) {
                 .padding(padding)
         ) {
             TopProfileLayout(sizeOfMonitorList)
-            MainProfileContent()
+            MainProfileContent{viewModel.upgradeSubscription()}
             FooterContent { viewModel.logout() }
         }
     }
@@ -228,7 +227,7 @@ fun ImageTextContent(
 }
 
 @Composable
-fun MainProfileContent() {
+fun MainProfileContent(upgradeSubscription: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -242,7 +241,7 @@ fun MainProfileContent() {
                 text = "Manage Subscription",
                 fontSize = 22.sp,
             )
-            SubscriptionView()
+            SubscriptionView{upgradeSubscription.invoke()}
 
             Divider(modifier = Modifier.padding(vertical = 6.dp))
         }
@@ -250,7 +249,7 @@ fun MainProfileContent() {
 }
 
 @Composable
-fun SubscriptionView() {
+fun SubscriptionView(upgradeSubscription: () -> Unit) {
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.pro))
     Surface(
         modifier = Modifier
@@ -295,7 +294,7 @@ fun SubscriptionView() {
                     color = Color.LightGray
                 )
                 Button(
-                    onClick = {},
+                    onClick = {upgradeSubscription.invoke()},
                     enabled = true,
                     shape = RoundedCornerShape(5.dp),
                     modifier = Modifier

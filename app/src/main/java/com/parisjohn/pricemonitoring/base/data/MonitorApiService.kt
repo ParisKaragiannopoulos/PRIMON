@@ -28,6 +28,9 @@ interface MonitorApiService {
     @POST("customer/login")
     suspend fun login(@Body userLoginRequest: UserLoginRequest): Response<String>
 
+    @POST("subscription/premium")
+    suspend fun upgradeSubscription(): Response<String>
+
     @POST("customer/register")
     suspend fun register(@Body userRegisterRequest: UserRegisterRequest): ResponseBody
 
@@ -35,6 +38,9 @@ interface MonitorApiService {
     suspend fun getHotelInfo(
       @Body searchHotelRequest: SearchHotelRequest
     ): HotelInfoResponse
+
+    @GET("hotel/{id}")
+    suspend fun getHotelByID(@Path("id") id: Long): HotelInfoResponse
 
     @POST("monitor_list")
     suspend fun postNewMonitorList(@Body monitorListRequest: MonitorListRequest): ResponseBody
@@ -48,6 +54,6 @@ interface MonitorApiService {
     @PUT("monitor_list")
     suspend fun updateMonitorList(@Body monitorListRequest: UpdateMonitorListRequest): ResponseBody
 
-    @GET("/prices/{roomID}")
-    suspend fun getPricesOfSpecificRoom(@Path("roomID") roomID: String, @Query("size") size: Int): PriceRoomResponse
+    @GET("/prices/{monitorListID}/{roomID}")
+    suspend fun getPricesOfSpecificRoom(@Path("monitorListID") monitorListID: String,@Path("roomID") roomID: String, @Query("size") size: Int): PriceRoomResponse
 }

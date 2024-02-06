@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import okhttp3.internal.wait
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +63,9 @@ fun LoginField(
             textColor = Color.White,
             placeholderColor = Color.White,
             unfocusedLabelColor = Color.White,
-            unfocusedBorderColor = Color.Transparent
+            unfocusedBorderColor = Color.Transparent,
+            focusedLabelColor = Color.White,
+            focusedBorderColor = Color.White
         ),
     )
 }

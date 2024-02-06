@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,22 +19,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -66,16 +60,12 @@ import com.parisjohn.pricemonitoring.ui.theme.PriceMonitoringTheme
 import com.parisjohn.pricemonitoring.ui.theme.Purple40
 import com.parisjohn.pricemonitoring.utils.showToast
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
-import kotlin.random.Random
-import kotlin.random.nextInt
 
 
 @Composable
 fun MonitorDetailScreen(
     onBackClick: () -> Unit,
+    onHotelClick: (id: Long) -> Unit = {},
     viewModel: MonitorDetailViewModel = hiltViewModel()
 ) {
     var isLoading by remember { mutableStateOf(false) }
@@ -121,7 +111,9 @@ fun MonitorDetailScreen(
                     .size(32.dp),
             )
         }
-        ExpandableList(response, viewModel)
+        ExpandableList(response, viewModel){
+            onHotelClick.invoke(it)
+        }
 
     }
     if (isLoading) {
@@ -230,7 +222,8 @@ private class XDateFormatter(private val axisX: List<String>) : ValueFormatter()
 @Composable
 fun SectionHeader(
     item: MonitorListResponse.Room,
-    onHeaderClicked: () -> Unit
+    onHeaderClicked: () -> Unit,
+    onHotelClick: () -> Unit
 ) {
     androidx.compose.material3.Surface(
         modifier = Modifier
@@ -266,8 +259,11 @@ fun SectionHeader(
                 )
             }
             Text(
-                modifier = Modifier.fillMaxWidth(),
-                text = item.description,
+                modifier = Modifier.fillMaxWidth().clickable {
+                    onHotelClick.invoke()
+                },
+                color = Color.Blue,
+                text = item.hotelName,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Light
             )
@@ -284,7 +280,11 @@ fun SectionHeader(
 }
 
 @Composable
-fun ExpandableList(sections: List<MonitorListResponse.Room>, viewModel: MonitorDetailViewModel) {
+fun ExpandableList(
+    sections: List<MonitorListResponse.Room>,
+    viewModel: MonitorDetailViewModel,
+    onHotelClick: (id: Long) -> Unit = {}
+) {
     LazyColumn(
         content = {
             sections.onEachIndexed { index, sectionData ->
@@ -292,6 +292,9 @@ fun ExpandableList(sections: List<MonitorListResponse.Room>, viewModel: MonitorD
                     sectionData = sectionData,
                     onHeaderClick = {
                         viewModel.getGraph(sectionData.roomID)
+                    },
+                    onHotelClick = {
+                        onHotelClick.invoke(sectionData.hotelID.toLong())
                     }
                 )
             }
@@ -301,13 +304,15 @@ fun ExpandableList(sections: List<MonitorListResponse.Room>, viewModel: MonitorD
 
 fun LazyListScope.Section(
     sectionData: MonitorListResponse.Room,
-    onHeaderClick: () -> Unit
+    onHeaderClick: () -> Unit,
+    onHotelClick: () -> Unit
 ) {
 
     item {
         SectionHeader(
             item = sectionData,
-            onHeaderClicked = onHeaderClick
+            onHeaderClicked = onHeaderClick,
+            onHotelClick = onHotelClick
         )
     }
 }

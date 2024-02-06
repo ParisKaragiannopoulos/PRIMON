@@ -149,11 +149,11 @@ fun MonitorListScreen(
 fun StatisticsScreen() {
     //Ratings of hotels
     val typeAmountMap: MutableMap<String, Int> = HashMap()
-    typeAmountMap["until 6"] = Random.nextInt(100)
-    typeAmountMap["7"] = Random.nextInt(100)
-    typeAmountMap["8"] = Random.nextInt(100)
-    typeAmountMap["9"] = Random.nextInt(100)
-    typeAmountMap["10"] = Random.nextInt(100)
+    typeAmountMap["until 6"] = 24
+    typeAmountMap["7"] = 55
+    typeAmountMap["8"] = 87
+    typeAmountMap["9"] = 74
+    typeAmountMap["10"] = 19
     Surface(
         modifier = Modifier
             .padding(5.dp)
@@ -195,11 +195,11 @@ fun StatisticsScreen() {
     }
 
     val barEntries = ArrayList<BarEntry>()
-    barEntries.add(BarEntry(1f, Random.nextInt(40,100).toFloat()))
-    barEntries.add(BarEntry(2f,  Random.nextInt(40,100).toFloat()))
-    barEntries.add(BarEntry(3f, Random.nextInt(40,100).toFloat()))
-    barEntries.add(BarEntry(4f, Random.nextInt(40,100).toFloat()))
-    barEntries.add(BarEntry(5f, Random.nextInt(40,100).toFloat()))
+    barEntries.add(BarEntry(1f, 56f))
+    barEntries.add(BarEntry(2f,  42f))
+    barEntries.add(BarEntry(3f, 78f))
+    barEntries.add(BarEntry(4f, 65f))
+    barEntries.add(BarEntry(5f, 94f))
 
     val xAxisName = ArrayList<String>()
     xAxisName.add("Electra")
@@ -251,10 +251,10 @@ fun StatisticsScreen() {
     }
 
     val typeAmountMapMx: MutableMap<String, Int> = HashMap()
-    typeAmountMapMx["1 Max persons"] = Random.nextInt(100)
-    typeAmountMapMx["2 Max persons"] = Random.nextInt(100)
-    typeAmountMapMx["3 Max persons"] = Random.nextInt(100)
-    typeAmountMapMx["4+ Max persons"] = Random.nextInt(100)
+    typeAmountMapMx["1 Max persons"] = 12
+    typeAmountMapMx["2 Max persons"] = 45
+    typeAmountMapMx["3 Max persons"] = 8
+    typeAmountMapMx["4+ Max persons"] = 15
     Surface(
         modifier = Modifier
             .padding(5.dp)
@@ -293,6 +293,63 @@ fun StatisticsScreen() {
                 .size(120.dp))
         }
     }
+
+    val barExpensiveEntries = ArrayList<BarEntry>()
+    barExpensiveEntries.add(BarEntry(1f, 140f))
+    barExpensiveEntries.add(BarEntry(2f,  220f))
+    barExpensiveEntries.add(BarEntry(3f, 150f))
+    barExpensiveEntries.add(BarEntry(4f, 432f))
+    barExpensiveEntries.add(BarEntry(5f, 312f))
+
+    val xAxisExpensiveName = ArrayList<String>()
+    xAxisExpensiveName.add("Royal Mansour")
+    xAxisExpensiveName.add("Royal Mansour")
+    xAxisExpensiveName.add("The Conrad")
+    xAxisExpensiveName.add("Resort Lagonissi")
+    xAxisExpensiveName.add("Martinez")
+    xAxisExpensiveName.add("Four Seasons")
+
+    Surface(
+        modifier = Modifier
+            .padding(5.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8),
+        border = BorderStroke(0.1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        Column {
+            Text(
+                text = "Top 5 expensive hotels",
+                fontSize = 18.sp,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
+            )
+            AndroidView(factory = { ctx ->
+                //  Initialize a View or View hierarchy here
+                BarChart(ctx).apply {
+                    setDrawBarShadow(false)
+                    setFitBars(true)
+                    setDrawValueAboveBar(false)
+                    setPinchZoom(false)
+                    setDrawGridBackground(false)
+                    setClipValuesToContent(false)
+                    description.isEnabled = false
+                    data = barChart(barExpensiveEntries)
+                    invalidate()
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT) //set whatever color you prefer
+                    legend.textSize = 10f
+                    legend.formSize = 10f //To set components of x axis
+                    xAxis.textSize = 13f
+                    xAxis.labelRotationAngle = 60f
+                    xAxis.position = XAxis.XAxisPosition.BOTTOM
+                    xAxis.valueFormatter = IndexAxisValueFormatter(xAxisExpensiveName)
+                    xAxis.setDrawGridLines(false)
+                }
+            }, modifier = Modifier
+                .fillMaxWidth()
+                .size(300.dp))
+        }
+    }
     //
 }
 
@@ -308,20 +365,12 @@ fun barChart(barEntries: ArrayList<BarEntry>): BarData {
 }
 fun createPie(typeAmountMap: MutableMap<String, Int>):PieData{
     val pieEntries: ArrayList<PieEntry> = ArrayList<PieEntry>()
-    //initializing colors for the entries
-
-    //initializing colors for the entries
-    val colors = ArrayList<Int>()
-    for (i in 0..5){
-        colors.add(android.graphics.Color.parseColor(String.format("#%06X", 0xFFFFFF and android.graphics.Color.rgb(Random.nextInt(256), Random.nextInt(256), Random.nextInt(256)))))
-    }
-
     for (type in typeAmountMap.keys) {
         pieEntries.add(PieEntry(typeAmountMap[type]!!.toFloat(), type))
     }
     val pieDataSet = PieDataSet(pieEntries,"")
     pieDataSet.valueTextSize = 12f
-    pieDataSet.colors = colors
+    pieDataSet.setColors(*ColorTemplate.COLORFUL_COLORS)
     val pieData = PieData(pieDataSet)
     pieData.setDrawValues(false)
     return pieData
