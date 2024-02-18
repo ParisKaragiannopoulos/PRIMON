@@ -50,8 +50,8 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun LoginScreen(loginViewModel: LoginViewModel = hiltViewModel(),
                   onSignUpClick: ()-> Unit, onLoginClick: () -> Unit) {
-    var loginEmail by remember { mutableStateOf("test@email.com") }
-    var loginPassword by remember { mutableStateOf("TestPass123!") }
+    var loginEmail by remember { mutableStateOf("") }
+    var loginPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
 

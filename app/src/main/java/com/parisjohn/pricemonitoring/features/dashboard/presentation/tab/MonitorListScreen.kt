@@ -123,7 +123,18 @@ fun MonitorListScreen(
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold
                 )
-                StatisticsScreen()
+                if(list.isNotEmpty()){
+                    StatisticsScreen()
+                }
+                else{
+                    Text(
+                        text = "Add your monitor lists",
+                        fontSize = 18.sp,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             item {
                 UpdateList(

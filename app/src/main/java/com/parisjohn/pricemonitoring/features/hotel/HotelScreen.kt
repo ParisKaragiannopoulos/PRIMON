@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -101,65 +102,75 @@ fun HotelScreen(
         }
     }
     Box {
-        Box(modifier = Modifier.height(250.dp)) {
-            Image(
-                painter = painterResource(id = R.drawable.search_bg),
-                contentDescription = stringResource(id = R.string.login_background),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
-                contentScale = ContentScale.Crop
-            )
-            Image(
-                painter = painterResource(id = R.drawable.ic_back),
-                contentDescription = stringResource(id = R.string.login_background),
-                modifier = Modifier
-                    .padding(8.dp)
-                    .size(32.dp)
-                    .clickable { onBackClick() }
-            )
-        }
         Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(top = 235.dp)
-                .clip(shape = RoundedCornerShape(15.dp, 15.dp, 0.dp, 0.dp))
-                .background(Color.White),
-        ) {
-            response?.let {
-                Text(
-                    modifier = Modifier
-                        .padding(10.dp),
-                    text = it.name,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    modifier = Modifier
-                        .padding(10.dp),
-                    text = "Description: \n\n" + it.description,
-                    fontSize = 20.sp,
-                )
-                Text(
-                    modifier = Modifier
-                        .padding(10.dp),
-                    text = "Score: \n\n${it.score} / 10",
-                    fontSize = 20.sp,
-                )
-                ShareMap(
-                    latitude = it.location.latitude.toString(),
-                    longitude = it.location.longitude.toString(),
-                    label = it.location.address
-                )
+            modifier = Modifier.verticalScroll(rememberScrollState()),
 
-                Text(
+        ) {
+            Box(modifier = Modifier.height(250.dp)) {
+                Image(
+                    painter = painterResource(id = R.drawable.search_bg),
+                    contentDescription = stringResource(id = R.string.login_background),
                     modifier = Modifier
-                        .padding(10.dp),
-                    text = "Rooms:",
-                    fontSize = 20.sp,
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentScale = ContentScale.Crop
                 )
-                it.rooms.forEach { room ->
-                    HotelDetailItem(room)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Absolute.Left
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_back),
+                        contentDescription = stringResource(id = R.string.login_background),
+                        modifier = Modifier
+                            .clickable {
+                                onBackClick()
+                            }
+                            .padding(8.dp)
+                            .size(32.dp),
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .clip(shape = RoundedCornerShape(15.dp, 15.dp, 0.dp, 0.dp))
+                    .background(Color.White),
+            ) {
+                response?.let {
+                    Text(
+                        modifier = Modifier
+                            .padding(10.dp),
+                        text = it.name,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(10.dp),
+                        text = "Description: \n\n" + it.description,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        modifier = Modifier
+                            .padding(10.dp),
+                        text = "Score: \n\n${it.score} / 10",
+                        fontSize = 20.sp,
+                    )
+                    ShareMap(
+                        latitude = it.location.latitude.toString(),
+                        longitude = it.location.longitude.toString(),
+                        label = it.location.address
+                    )
+
+                    Text(
+                        modifier = Modifier
+                            .padding(10.dp),
+                        text = "Rooms:",
+                        fontSize = 20.sp,
+                    )
+                    it.rooms.forEach { room ->
+                        HotelDetailItem(room)
+                    }
                 }
             }
         }

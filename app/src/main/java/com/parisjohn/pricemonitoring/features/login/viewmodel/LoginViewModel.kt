@@ -58,10 +58,20 @@ class LoginViewModel @Inject constructor(
                     }
                     _loginEvent.emit(UserUiEvents.Failure(message))
                 }.collect {
-                    it.body()?.let { it1 -> sessionManager.saveAuthToken(it1) }
-                    _loginEvent.emit(
-                        UserUiEvents.LoginSuccess
-                    )
+                    if(it.body()!=null){
+                    it.body()?.let { it1 ->
+                        sessionManager.saveAuthToken(it1)
+                        _loginEvent.emit(
+                            UserUiEvents.LoginSuccess
+                        )}
+                    }
+                    else{
+                        var message = "Something went wrong"
+                        if(it.code() == 401){
+                            message = "Wrong Credentials"
+                        }
+                        _loginEvent.emit(UserUiEvents.Failure(message))
+                    }
                 }
         }
     }
@@ -82,21 +92,18 @@ class LoginViewModel @Inject constructor(
             }
             userRepository.signupUser(user)
                 .onStart {
-                    _loginEvent.emit(
-                        UserUiEvents.Loading
-                    )
+                    _loginEvent.emit(UserUiEvents.Loading)
                 }.catch {
-                    var message = "Something went wrong"
-                    if(it is retrofit2.HttpException){
-                        if(it.code() == 401){
-                            message = "Wrong Credentials"
-                        }
-                    }
-                    _loginEvent.emit(UserUiEvents.Failure(message))
+                    _loginEvent.emit(UserUiEvents.LoginSuccess)
+//                    var message = "Something went wrong"
+//                    if(it is retrofit2.HttpException){
+//                        if(it.code() == 401){
+//                            message = "Wrong Credentials"
+//                        }
+//                    }
+//                    _loginEvent.emit(UserUiEvents.Failure(message))
                 }.collect {
-                    _loginEvent.emit(
-                        UserUiEvents.LoginSuccess
-                    )
+                    _loginEvent.emit(UserUiEvents.LoginSuccess)
                 }
         }
     }
